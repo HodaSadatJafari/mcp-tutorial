@@ -5,6 +5,7 @@ description = "How to create and use MCP"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
+    "chromadb>=1.5.9",
     "mcp[cli]>=2.1.1",
     "openai>=3.7.0",
 ]

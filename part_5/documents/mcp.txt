@@ -1,0 +1,13 @@
+MCP stands for Model Context Protocol.
+
+MCP is an open protocol for connecting AI applications
+to external data sources, tools, and services.
+
+An MCP server can expose tools, resources, and prompts.
+
+Tools allow an AI application to perform actions.
+Resources provide data or context that an AI application
+can read.
+
+MCP makes it possible for AI applications to interact
+with external capabilities through a standardized protocol.

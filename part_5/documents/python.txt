@@ -1,0 +1,7 @@
+Python is a high-level programming language.
+
+Python is commonly used for web development, automation,
+data science, machine learning, and artificial intelligence.
+
+Python has a large ecosystem of libraries and frameworks,
+including Django, FastAPI, NumPy, and PyTorch.
