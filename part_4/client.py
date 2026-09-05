@@ -14,10 +14,6 @@ from mcp.client.stdio import stdio_client
 
 from mcp.types import TextResourceContents
 
-# =========================================================
-# ENVIRONMENT
-# =========================================================
-
 load_dotenv()
 
 # =========================================================
@@ -40,8 +36,6 @@ server_params = StdioServerParameters(
 # =========================================================
 # MCP → OPENAI TOOL CONVERSION
 # =========================================================
-
-
 def mcp_tools_to_openai_tools(
     mcp_tools,
 ) -> list[dict]:
@@ -69,8 +63,6 @@ def mcp_tools_to_openai_tools(
 # =========================================================
 # READ MCP RESOURCE
 # =========================================================
-
-
 async def read_document(
     session: ClientSession,
     filename: str,
@@ -99,8 +91,6 @@ async def read_document(
 # =========================================================
 # CALL MCP TOOL
 # =========================================================
-
-
 async def call_mcp_tool(
     session: ClientSession,
     tool_name: str,
@@ -121,8 +111,6 @@ async def call_mcp_tool(
 # =========================================================
 # EXTRACT TEXT FROM MCP RESULT
 # =========================================================
-
-
 def extract_mcp_text(result) -> str:
     """
     Extract text content from an MCP tool result.
@@ -131,9 +119,7 @@ def extract_mcp_text(result) -> str:
     texts = []
 
     for content in result.content:
-
         if hasattr(content, "text"):
-
             texts.append(content.text)
 
     return "\n".join(texts)
@@ -142,8 +128,6 @@ def extract_mcp_text(result) -> str:
 # =========================================================
 # SEARCH DOCUMENTS
 # =========================================================
-
-
 async def search_documents(
     session: ClientSession,
     query: str,
@@ -198,8 +182,6 @@ async def search_documents(
 # =========================================================
 # BUILD DOCUMENT CONTEXT
 # =========================================================
-
-
 async def build_document_context(
     session: ClientSession,
     filenames: list[str],
@@ -224,23 +206,18 @@ async def build_document_context(
             )
 
             documents.append(f"""
---- DOCUMENT: {filename} ---
-
-{content}
-
---- END DOCUMENT ---
-""")
+                --- DOCUMENT: {filename} ---
+                {content}
+                --- END DOCUMENT ---
+                """)
 
         except Exception as exc:
-
             documents.append(f"""
---- DOCUMENT: {filename} ---
-
-Could not read document:
-{exc}
-
---- END DOCUMENT ---
-""")
+                --- DOCUMENT: {filename} ---
+                Could not read document:
+                {exc}
+                --- END DOCUMENT ---
+                """)
 
     return "\n".join(documents)
 
@@ -248,8 +225,6 @@ Could not read document:
 # =========================================================
 # PROCESS ONE USER QUESTION
 # =========================================================
-
-
 async def process_question(
     session: ClientSession,
     openai_tools: list[dict],
@@ -273,45 +248,45 @@ async def process_question(
     response = openai_client.responses.create(
         model="gpt-4o-mini",
         instructions="""
-You are a document question-answering assistant.
+            You are a document question-answering assistant.
 
-IMPORTANT RULE:
+            IMPORTANT RULE:
 
-For EVERY user question, you MUST first use the
-search_documents MCP tool.
+            For EVERY user question, you MUST first use the
+            search_documents MCP tool.
 
-Do not answer from your own knowledge before searching
-the documents.
+            Do not answer from your own knowledge before searching
+            the documents.
 
-After the search:
+            After the search:
 
-1. Look at the returned filenames.
-2. The application will provide the contents of the
-   matching documents.
-3. Answer using those documents.
-4. If no documents match the question, clearly say that
-   the provided document collection does not contain
-   enough information to answer the question.
-5. Do not invent information that is not present in
-   the documents.
+            1. Look at the returned filenames.
+            2. The application will provide the contents of the
+            matching documents.
+            3. Answer using those documents.
+            4. If no documents match the question, clearly say that
+            the provided document collection does not contain
+            enough information to answer the question.
+            5. Do not invent information that is not present in
+            the documents.
 
-Examples:
+            Examples:
 
-User:
-"What is MCP?"
+            User:
+            "What is MCP?"
 
-You should search:
-search_documents(query="MCP")
+            You should search:
+            search_documents(query="MCP")
 
-User:
-"What is .NET?"
+            User:
+            "What is .NET?"
 
-You should search:
-search_documents(query=".NET")
+            You should search:
+            search_documents(query=".NET")
 
-If the search returns no documents, do NOT answer from
-your general knowledge.
-""",
+            If the search returns no documents, do NOT answer from
+            your general knowledge.
+            """,
         input=conversation,
         tools=openai_tools,
         # Important for this learning example:
@@ -322,7 +297,6 @@ your general knowledge.
     # -----------------------------------------------------
     # TOOL CALL LOOP
     # -----------------------------------------------------
-
     while True:
 
         tool_calls = [item for item in response.output if item.type == "function_call"]
@@ -330,19 +304,14 @@ your general knowledge.
         # -------------------------------------------------
         # No more tool calls → final answer
         # -------------------------------------------------
-
         if not tool_calls:
-
             answer = response.output_text
-
             conversation.extend(response.output)
-
             return answer
 
         # -------------------------------------------------
         # Execute MCP tools
         # -------------------------------------------------
-
         tool_outputs = []
 
         for tool_call in tool_calls:
@@ -362,7 +331,6 @@ your general knowledge.
                 # -----------------------------------------
                 # SEARCH DOCUMENTS
                 # -----------------------------------------
-
                 if tool_call.name == "search_documents":
 
                     filenames = []
@@ -417,7 +385,6 @@ your general knowledge.
                     # -------------------------------------
                     # READ MATCHING RESOURCES
                     # -------------------------------------
-
                     document_context = await build_document_context(
                         session,
                         filenames,
@@ -436,7 +403,6 @@ your general knowledge.
             # ---------------------------------------------
             # Return MCP result to LLM
             # ---------------------------------------------
-
             tool_outputs.append(
                 {
                     "type": "function_call_output",
@@ -452,15 +418,15 @@ your general knowledge.
         response = openai_client.responses.create(
             model="gpt-4o-mini",
             instructions="""
-Answer the user's question using the MCP document
-content returned by the previous tool call.
+                Answer the user's question using the MCP document
+                content returned by the previous tool call.
 
-Do not use outside knowledge.
+                Do not use outside knowledge.
 
-If the MCP search found no documents, explain that
-the provided document collection does not contain
-enough information to answer the question.
-""",
+                If the MCP search found no documents, explain that
+                the provided document collection does not contain
+                enough information to answer the question.
+                """,
             previous_response_id=response.id,
             input=tool_outputs,
             tools=openai_tools,
@@ -470,8 +436,6 @@ enough information to answer the question.
 # =========================================================
 # MAIN APPLICATION
 # =========================================================
-
-
 async def main():
 
     print("=" * 60)
@@ -483,7 +447,6 @@ async def main():
     # -----------------------------------------------------
     # Start MCP server
     # -----------------------------------------------------
-
     async with stdio_client(server_params) as (read, write):
 
         async with ClientSession(
@@ -494,7 +457,6 @@ async def main():
             # ---------------------------------------------
             # MCP initialization
             # ---------------------------------------------
-
             await session.initialize()
 
             print("MCP connection established.")
@@ -502,7 +464,6 @@ async def main():
             # ---------------------------------------------
             # Get available tools
             # ---------------------------------------------
-
             tools_result = await session.list_tools()
 
             openai_tools = mcp_tools_to_openai_tools(tools_result.tools)
@@ -528,7 +489,6 @@ async def main():
             # ---------------------------------------------
             # Conversation history
             # ---------------------------------------------
-
             conversation = []
 
             print("\nType 'exit' or 'quit' to stop.")
@@ -536,7 +496,6 @@ async def main():
             # =============================================
             # CHAT LOOP
             # =============================================
-
             while True:
 
                 try:
@@ -549,20 +508,17 @@ async def main():
                 ):
 
                     print("\nGoodbye!")
-
                     break
 
                 # -----------------------------------------
                 # Exit
                 # -----------------------------------------
-
                 if question.lower() in {
                     "exit",
                     "quit",
                 }:
 
                     print("Goodbye!")
-
                     break
 
                 if not question:
@@ -571,7 +527,6 @@ async def main():
                 # -----------------------------------------
                 # Process question
                 # -----------------------------------------
-
                 try:
 
                     answer = await process_question(
@@ -591,6 +546,5 @@ async def main():
 # =========================================================
 # ENTRY POINT
 # =========================================================
-
 if __name__ == "__main__":
     asyncio.run(main())
